@@ -3,5 +3,5 @@
 
 int main(int argc, char** argv)
 {
-	return supermarx::scraper_cli<supermarx::scraper>::exec(1, "maximus", "Jumbo", argc, argv);
+	return supermarx::scraper_cli<supermarx::scraper>::exec(3, "maximus", "Jumbo", argc, argv);
 }
