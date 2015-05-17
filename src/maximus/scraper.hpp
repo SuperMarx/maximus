@@ -4,7 +4,7 @@
 
 #include <supermarx/product.hpp>
 #include <supermarx/raw.hpp>
-#include <supermarx/util/downloader.hpp>
+#include <supermarx/util/cached_downloader.hpp>
 
 namespace supermarx
 {
@@ -16,10 +16,10 @@ namespace supermarx
 
 	private:
 		callback_t callback;
-		downloader dl;
+		cached_downloader dl;
 
 	public:
-		scraper(callback_t _callback, size_t ratelimit);
+		scraper(callback_t _callback, size_t ratelimit, bool cache = false);
 		scraper(scraper&) = delete;
 		void operator=(scraper&) = delete;
 

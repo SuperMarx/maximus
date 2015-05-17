@@ -12,9 +12,9 @@
 
 namespace supermarx
 {
-	scraper::scraper(callback_t _callback, size_t _ratelimit)
+	scraper::scraper(callback_t _callback, size_t _ratelimit, bool _cache)
 	: callback(_callback)
-	, dl("supermarx maximus/1.0", _ratelimit)
+	, dl("supermarx maximus/1.0", _ratelimit, _cache ? boost::optional<std::string>("./cache") : boost::none)
 	{}
 
 	void scraper::scrape()
