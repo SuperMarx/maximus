@@ -42,7 +42,7 @@ namespace supermarx
 					if(_image_uri)
 						image_uri = base_uri + *_image_uri;
 
-					callback(puri, _image_uri, p, retrieved_on, conf, probs);
+					callback(puri, image_uri, p, retrieved_on, conf, probs);
 
 					++product_i;
 				});
