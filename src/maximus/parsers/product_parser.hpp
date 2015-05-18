@@ -41,6 +41,7 @@ namespace supermarx
 			std::string identifier, name;
 			boost::optional<std::string> image_uri;
 			boost::optional<unsigned int> price;
+			boost::optional<unsigned int> was_price;
 			boost::optional<std::string> valid_from_to;
 			boost::optional<std::string> unit;
 			boost::optional<std::string> badge;
@@ -145,12 +146,19 @@ namespace supermarx
 
 		void interpret_valid_on(std::string const& valid_from_to, datetime& valid_on)
 		{
-			static const boost::regex match_valid_from_to("Geldig van ([0-9]+-[0-9]+) t/m [0-9]+-[0-9]+");
+			static const boost::regex match_valid_from_to("Geldig van ([0-9]+)-([0-9]+) t/m [0-9]+-[0-9]+");
 			boost::smatch what;
 
 			if(boost::regex_match(valid_from_to, what, match_valid_from_to))
 			{
-				std::cerr << what[1] << std::endl;
+				size_t day = boost::lexical_cast<size_t>(what[1]);
+				size_t month = boost::lexical_cast<size_t>(what[2]);
+
+				auto now(datetime_now());
+				date d(now.date().year(), month, day);
+
+				if(d > now.date())
+					valid_on = datetime(d);
 			}
 			else
 			{
@@ -169,6 +177,10 @@ namespace supermarx
 
 			uint64_t orig_price = current_p.price.get();
 			uint64_t price = orig_price;
+
+			if(current_p.was_price)
+				orig_price = *current_p.was_price;
+
 			uint64_t discount_amount = 1;
 
 			if(current_p.badge)
@@ -188,10 +200,10 @@ namespace supermarx
 					orig_price,
 					price,
 					discount_amount,
-					datetime_now(), // TODO
+					valid_on
 				},
 				current_p.image_uri,
-				valid_on,
+				datetime_now(),
 				current_p.conf,
 				current_p.problems
 			);
@@ -253,13 +265,29 @@ namespace supermarx
 						state = S_PRODUCT;
 					});
 				}
-				else if(util::contains_attr("jum-price-format", att_class) && !util::contains_attr("jum-comparative-price", att_class))
+				else if(
+					util::contains_attr("jum-price-format", att_class) &&
+					!util::contains_attr("jum-comparative-price", att_class) &&
+					!util::contains_attr("jum-was-price", att_class)
+				)
 				{
 					// TODO check comparative price / assert
 
 					rec = html_recorder(
 						[&](std::string ch) {
 							current_p.price = boost::lexical_cast<unsigned int>(util::sanitize(ch));
+						});
+				}
+				else if(
+					util::contains_attr("jum-price-format", att_class) &&
+					util::contains_attr("jum-was-price", att_class)
+				)
+				{
+					rec = html_recorder(
+						[&](std::string ch) {
+							ch = util::sanitize(ch);
+							boost::erase_all(ch, ",");
+							current_p.was_price = boost::lexical_cast<unsigned int>(ch);
 						});
 				}
 				else if(util::contains_attr("jum-pack-size", att_class))
