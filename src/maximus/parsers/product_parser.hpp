@@ -81,14 +81,73 @@ namespace supermarx
 
 		void interpret_unit(std::string unit, uint64_t& volume, measure& volume_measure)
 		{
-			static const boost::regex match_measure("(?:ca. )?([0-9]+(?:\\.[0-9]+)?)(?: )?(g|gr|gram|kg|kilo|ml|cl|lt|liter)(?:\\.)?");
+			static const std::set<std::string> valid_stuks({
+				"st", "stuk", "stuks",
+				"scharreleieren", "tabl", "filterhulzen", "test", "schuursponsen",
+				"verbanden", "tandenstokers", "strips", "bruistabletten",
+				"patches", "tabletten", "condooms", "capsules", "servetten", "paar",
+				"gezichtstissues", "rol", "tissues", "sigaretten", "witte bollen",
+				"haardblok", "vrije uitloop eieren", "braadschotels", "caps", "geurkaarsen",
+				"luiers", "kauwtabletten", "pakjes", "tampons", "blaarpleisters",
+				"rollen", "toiletrollen", "aanstekers", "geurbuiltjes", "slim filters",
+				"theefilters", "inlegkruisjes", "sigaren", "beschuiten", "batterijen",
+				"doekjes", "sigaretten"
+			});
+
+			static const std::set<std::string> invalid_stuks({
+				"wasbeurten", "plakjes", "bos", "bosjes", "porties",
+				"zakjes", "sachets", "kaarten", "lapjes", "zegel", "pakjes"
+			});
+
+			static const boost::regex match_multi("([0-9]+)(?: )?[xX](?: )?(.+)");
+
+			static const boost::regex match_stuks("(?:ca. )?([0-9]+) (.+)");
+			static const boost::regex match_pers("(?:ca. )?([0-9]+(?:-[0-9]+)?) pers\\.");
+
+			static const boost::regex match_measure("(?:ca. )?([0-9]+(?:\\.[0-9]+)?)(?: )?(mg|g|gr|gram|kg|kilo|ml|cl|l|lt|liter|litre)(?:\\.)?");
 			boost::smatch what;
 
-			if(boost::regex_match(unit, what, match_measure))
+			std::replace(unit.begin(), unit.end(), ',', '.');
+
+			uint64_t multiplier = 1;
+			if(boost::regex_match(unit, what, match_multi))
+			{
+				multiplier = boost::lexical_cast<uint64_t>(what[1]);
+				unit = what[2];
+			}
+
+			if(
+				unit == "per stuk" ||
+				unit == "per krop" ||
+				unit == "per bos" ||
+				unit == "per bosje" ||
+				unit == "per doos" ||
+				unit == "per set" ||
+				unit == "éénkops" ||
+				boost::regex_match(unit, what, match_pers)
+			)
+			{
+				// Do nothing
+			}
+			else if(boost::regex_match(unit, what, match_stuks))
+			{
+				if(valid_stuks.find(what[2]) != valid_stuks.end())
+					volume = boost::lexical_cast<float>(what[1]);
+				else if(invalid_stuks.find(what[2]) != invalid_stuks.end())
+				{
+					// Do nothing
+				}
+			}
+			else if(boost::regex_match(unit, what, match_measure))
 			{
 				std::string measure_type = what[2];
 
-				if(measure_type == "g" || measure_type == "gr" || measure_type == "gram")
+				if(measure_type == "mg")
+				{
+					volume = boost::lexical_cast<float>(what[1]);
+					volume_measure = measure::MILLIGRAMS;
+				}
+				else if(measure_type == "g" || measure_type == "gr" || measure_type == "gram")
 				{
 					volume = boost::lexical_cast<float>(what[1])*1000.0;
 					volume_measure = measure::MILLIGRAMS;
@@ -108,7 +167,7 @@ namespace supermarx
 					volume = boost::lexical_cast<float>(what[1])*100.0;
 					volume_measure = measure::MILLILITERS;
 				}
-				else if(measure_type == "lt" || measure_type == "liter")
+				else if(measure_type == "l" || measure_type == "lt" || measure_type == "liter" || measure_type == "litre")
 				{
 					volume = boost::lexical_cast<float>(what[1])*1000.0;
 					volume_measure = measure::MILLILITERS;
@@ -125,18 +184,47 @@ namespace supermarx
 				report_problem_understanding("unit", unit);
 				current_p.conf = confidence::LOW;
 			}
+
+			volume *= multiplier;
 		}
 
 		void interpret_badge(std::string const& badge, uint64_t& price, uint64_t& discount_amount)
 		{
+			static const boost::regex match_ps_voor("p/s voor [0-9]+,[0-9]+");
+			static const boost::regex match_percent_discount("([0-9]+)% (?:probeer)?korting");
 			static const boost::regex match_combination_discount("([0-9]+) voor ([0-9]+),([0-9]+)");
 			boost::smatch what;
 
-			if(boost::regex_match(badge, what, match_combination_discount))
+			if(boost::regex_match(badge, what, match_ps_voor) ||
+				badge == "Omdozen Wijn 5% korting")
+			{
+				// Do nothing, already encoded
+			}
+			else if(boost::regex_match(badge, what, match_combination_discount))
 			{
 				discount_amount = boost::lexical_cast<uint64_t>(what[1]);
 				price = boost::lexical_cast<float>(what[2] + '.' + what[3])*100.0;
 			}
+			else if(boost::regex_match(badge, what, match_percent_discount))
+			{
+				price *= 1.0 - boost::lexical_cast<float>(what[1])/100.0;
+			}
+			else if(badge == "2e halve prijs")
+			{
+				discount_amount = 2;
+				price = price * 0.75;
+			}
+			else if(badge == "1 + 1 gratis" || badge == "2 halen, 1 betalen")
+			{
+				discount_amount = 2;
+				price = price * 0.5;
+			}
+			else if(badge == "2 + 1 gratis")
+			{
+				discount_amount = 3;
+				price = (price * 2) / 3;
+			}
+			//else if(badge == "samen voor 2 Euro") // Cannot encode this
 			else
 			{
 				report_problem_understanding("badge", badge);
