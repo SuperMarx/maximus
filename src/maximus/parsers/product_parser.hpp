@@ -263,7 +263,13 @@ namespace supermarx
 			if(current_p.unit)
 				interpret_unit(*current_p.unit, volume, volume_measure);
 
-			uint64_t orig_price = current_p.price.get();
+			if(!current_p.price)
+			{
+				std::cerr << "Price not set for " << current_p.name << std::endl;
+				return;
+			}
+
+			uint64_t orig_price = *current_p.price;
 			uint64_t price = orig_price;
 
 			if(current_p.was_price)
