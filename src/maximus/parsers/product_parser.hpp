@@ -243,7 +243,7 @@ namespace supermarx
 				size_t month = boost::lexical_cast<size_t>(what[2]);
 
 				auto now(datetime_now());
-				date d(now.date().year(), month, day);
+				date d(now.date().year(), month, day); // Do not use next_occurance, as date may lie in the past
 
 				if(d > now.date())
 					valid_on = datetime(d);
