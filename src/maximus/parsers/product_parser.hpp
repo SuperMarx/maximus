@@ -219,7 +219,7 @@ namespace supermarx
 				discount_amount = 2;
 				price = price * 0.5;
 			}
-			else if(badge == "2 + 1 gratis")
+			else if(badge == "2 + 1 gratis" || badge == "3 halen, 2 betalen")
 			{
 				discount_amount = 3;
 				price = (price * 2) / 3;
