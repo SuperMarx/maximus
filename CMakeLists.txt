@@ -10,4 +10,4 @@ list(APPEND maximus_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/src/")
 
 add_subdirectory("src/maximus")
 
-set(Albert_INCLUDE_DIRS ${maximus_INCLUDE_DIRS} PARENT_SCOPE)
+set(maximus_INCLUDE_DIRS ${maximus_INCLUDE_DIRS} PARENT_SCOPE)
