@@ -7,7 +7,7 @@
 #include <boost/regex.hpp>
 #include <boost/optional.hpp>
 
-#include <supermarx/product.hpp>
+#include <supermarx/message/product_base.hpp>
 
 #include <supermarx/scraper/html_parser.hpp>
 #include <supermarx/scraper/html_watcher.hpp>
@@ -19,7 +19,7 @@ namespace supermarx
 	class product_parser : public html_parser::default_handler
 	{
 	public:
-		typedef std::function<void(const product&, boost::optional<std::string>, datetime, confidence, std::vector<std::string>)> product_callback_t;
+		typedef std::function<void(const message::product_base&, boost::optional<std::string>, datetime, confidence, std::vector<std::string>)> product_callback_t;
 
 	private:
 		enum state_e {
@@ -286,7 +286,7 @@ namespace supermarx
 				interpret_valid_on(*current_p.valid_from_to, valid_on);
 
 			product_callback(
-				product{
+				message::product_base{
 					current_p.identifier,
 					current_p.name,
 					volume,

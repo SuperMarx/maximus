@@ -36,7 +36,7 @@ namespace supermarx
 				std::string puri = curi + "?PageNumber=" + boost::lexical_cast<std::string>(i);
 
 				size_t product_i = 0;
-				product_parser pp([&](const product& p, boost::optional<std::string> const& _image_uri, datetime retrieved_on, confidence conf, problems_t probs)
+				product_parser pp([&](const message::product_base& p, boost::optional<std::string> const& _image_uri, datetime retrieved_on, confidence conf, problems_t probs)
 				{
 					boost::optional<std::string> image_uri;
 					if(_image_uri)
