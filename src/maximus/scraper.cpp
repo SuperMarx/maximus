@@ -46,19 +46,19 @@ namespace supermarx
 
 					++product_i;
 				});
-				pp.parse(dl.fetch(puri));
+				pp.parse(dl.fetch(puri).body);
 
 				if(product_i == 0)
 					return;
 			}
 		});
 
-		cp.parse(dl.fetch(base_uri + "/producten"));
+		cp.parse(dl.fetch(base_uri + "/producten").body);
 	}
 
 	raw scraper::download_image(const std::string& uri)
 	{
-		std::string buf(dl.fetch(uri));
+		std::string buf(dl.fetch(uri).body);
 		return raw(buf.data(), buf.length());
 	}
 }
