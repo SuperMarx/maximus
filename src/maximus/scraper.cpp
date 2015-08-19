@@ -12,8 +12,8 @@
 
 namespace supermarx
 {
-	scraper::scraper(callback_t _callback, size_t _ratelimit, bool _cache, bool)
-	: callback(_callback)
+	scraper::scraper(product_callback_t _product_callback, tag_hierarchy_callback_t, unsigned int _ratelimit, bool _cache, bool)
+	: product_callback(_product_callback)
 	, dl("supermarx maximus/1.0", _ratelimit, _cache ? boost::optional<std::string>("./cache") : boost::none)
 	{}
 
@@ -38,7 +38,7 @@ namespace supermarx
 				size_t product_i = 0;
 				product_parser pp([&](const message::product_base& p, boost::optional<std::string> const& image_uri, datetime retrieved_on, confidence conf, problems_t probs)
 				{
-					callback(puri, image_uri, p, {}, retrieved_on, conf, probs);
+					product_callback(puri, image_uri, p, retrieved_on, conf, probs);
 
 					++product_i;
 				});

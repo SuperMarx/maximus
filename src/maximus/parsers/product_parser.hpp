@@ -294,7 +294,8 @@ namespace supermarx
 					orig_price,
 					price,
 					discount_amount,
-					valid_on
+					valid_on,
+					{} // TODO (tags)
 				},
 				current_p.image_uri,
 				datetime_now(),
